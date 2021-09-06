@@ -6,6 +6,7 @@ Serialization and deserialization uses the [MessagePack](https://msgpack.org/ind
 
 ### Quick example:
 
+Defining the schema:
 ```ts
 // A successful response from an API backend
 const apiSuccess = rec('apiSuccess', {
@@ -23,9 +24,9 @@ const {
   serialize: serializeApiResponse,
   deserialize: deserializeApiResponse,
 } = apiResponse;
-
-
-// Example backend usage:
+```
+Example backend usage:
+```ts
 import { serializeApiResponse } from 'your-schema';
 
 const resp = serializeApiResponse({
@@ -34,9 +35,9 @@ const resp = serializeApiResponse({
   errorMessage: 'Not found',
 }); // -> Uint8Array buffer to be sent over the wire
 res.send(Buffer.from(resp));
-
-
-// ... and then to be deserialized on the other side of the wire, in the frontend:
+```
+and then to be deserialized on the other side of the wire, in the frontend:
+```ts
 import { deserializeApiResponse } from 'your-schema';
 
 const fetchResp = new Uint8Array(await fetch(...).then(r => r.arrayBuffer()));
