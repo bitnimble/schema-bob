@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "esnext"
+    ],
+    "declaration": true,
+    "moduleResolution": "node",
+    "strict": true,
+    "baseUrl": "src",
+    "target": "es2015",
+    "module": "commonjs",
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": [
+      "jest",
+      "node"
+    ]
+  },
+  "include": [
+    "src",
+  ],
+  "exclude": [
+    "src/tests"
+  ]
+}
