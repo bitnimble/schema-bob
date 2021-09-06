@@ -1,8 +1,30 @@
 import * as msgpackr from 'msgpackr';
 
 export interface Type<T> {
+  /**
+   * Serializes an input value and returns a Uint8Array to be sent over-the-wire. For record-like
+   * types, this will strip any additional unspecified properties before serializing it.
+   * @param t the value to be serialized
+   * @returns a Uint8Array buffer representing a serialized form of the input value
+   */
   serialize(t: T): Uint8Array;
+  /**
+   * Attempts to deserialize an input Uint8Array back to the original type, and then validates that
+   * it conforms to the constraints originally provided to the builder function. For record-like
+   * types, this will strip any additional unspecified properties that happened to be present in the
+   * deserialized value before returning it to the caller.
+   * @param u a Uint8Array buffer
+   */
   deserialize(u: Uint8Array): T;
+  /**
+   * Validates that the input conforms to the constraints originally provided to the builder
+   * function. This does not attempt to transform or deserialize the input value before validating,
+   * so it must be of the correct type first.
+   * For primitives, this will return the input value.
+   * For record-like types, this will return a deep copy that has any additional unspecified
+   * properties stripped.
+   * @param u
+   */
   validate(u: unknown): T;
 }
 
