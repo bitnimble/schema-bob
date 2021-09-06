@@ -20,7 +20,7 @@ const apiError = rec('apiError', {
 });
 // Unioning the success and error responses into a common response type
 const apiResponse = union('apiResponse', 'success', [apiSuccess, apiError]);
-const {
+export const {
   serialize: serializeApiResponse,
   deserialize: deserializeApiResponse,
 } = apiResponse;
