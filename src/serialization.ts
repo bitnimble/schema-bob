@@ -28,8 +28,19 @@ export interface Type<T> {
   validate(u: unknown): T;
 }
 
+/**
+ * From T, pick a set of properties whose values are assignable to U
+ */
+type PickValues<T, U> = Pick<T, { [K in keyof T]: T[K] extends U ? K : never }[keyof T]>;
+type OmitValues<T, U> = Pick<T, { [K in keyof T]: T[K] extends U ? never : K }[keyof T]>;
+type PickOptionals<Schema extends Record<string, Type<any>>> = PickValues<Schema, { optional: true }>;
+type OmitOptionals<Schema extends Record<string, Type<any>>> = OmitValues<Schema, { optional: true }>;
+type ReifyType<T extends Type<any>> = ReturnType<T['validate']>;
+
 export type Reify<Schema> =
-    Schema extends Record<string, Type<any>> ? { [K in keyof Schema]: ReturnType<Schema[K]['validate']> }
+    Schema extends Record<string, Type<any>>
+      ? { [K in keyof PickOptionals<Schema>]?: ReifyType<PickOptionals<Schema>[K]> }
+      & { [K in keyof OmitOptionals<Schema>]: ReifyType<OmitOptionals<Schema>[K]> }
     : Schema extends Type<infer T>
       ? T extends (infer I)[] ? I[]
       : T
@@ -129,8 +140,12 @@ class Uint8ArrayType extends TypeImpl<Uint8Array> {
   };
 }
 
-export const optional = <S extends Type<any>>(base: S): Type<Reify<S> | undefined> => new OptionalType<S>(base);
+// Nullable types will have the same `Type` as an optional type (i.e. `T | undefined | null`), so we add an additional
+// meta-property `optional` to discriminate against it during `Reify`.
+export const optional = <S extends Type<any>>(base: S): Type<Reify<S> | undefined> & { optional: true } => new OptionalType<S>(base);
 class OptionalType<T extends Type<any>> extends TypeImpl<Reify<T> | undefined> {
+  readonly optional = true;
+
   constructor(private readonly base: T) {
     // TODO: wire parent name down into optionals
     super('');

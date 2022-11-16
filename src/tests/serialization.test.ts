@@ -99,6 +99,15 @@ describe('serialization', () => {
       };
       expect(rt(someRec, val)).toEqual(val);
     });
+
+    it('allows the omission of optional properties', () => {
+      const someRec = rec('someRec', {
+        prop1: optional(bool('prop1')),
+        prop2: optional(str('prop2')),
+      });
+      const val: Reify<typeof someRec> = {};
+      expect(rt(someRec, val)).toEqual(val);
+    });
   });
 
   describe('rec', () => {
