@@ -33,33 +33,37 @@ export interface Type<T> {
  */
 type PickValues<T, U> = Pick<T, { [K in keyof T]: T[K] extends U ? K : never }[keyof T]>;
 type OmitValues<T, U> = Pick<T, { [K in keyof T]: T[K] extends U ? never : K }[keyof T]>;
-type PickOptionals<Schema extends Record<string, Type<any>>> = PickValues<Schema, { optional: true }>;
-type OmitOptionals<Schema extends Record<string, Type<any>>> = OmitValues<Schema, { optional: true }>;
+type PickOptionals<Schema extends Record<string, Type<any>>> = PickValues<
+  Schema,
+  { optional: true }
+>;
+type OmitOptionals<Schema extends Record<string, Type<any>>> = OmitValues<
+  Schema,
+  { optional: true }
+>;
 type ReifyType<T extends Type<any>> = ReturnType<T['validate']>;
 
-export type Reify<Schema> =
-    Schema extends Record<string, Type<any>>
-      ? { [K in keyof PickOptionals<Schema>]?: ReifyType<PickOptionals<Schema>[K]> }
-      & { [K in keyof OmitOptionals<Schema>]: ReifyType<OmitOptionals<Schema>[K]> }
-    : Schema extends Type<infer T>
-      ? T extends (infer I)[] ? I[]
-      : T
-    : Schema extends (t: infer T) => Uint8Array ? T
-    : Schema extends (u: Uint8Array) => infer T ? T
-    : never;
+export type Reify<Schema> = Schema extends Record<string, Type<any>>
+  ? 
+    & { [K in keyof PickOptionals<Schema>]?: ReifyType<PickOptionals<Schema>[K]> }
+    & { [K in keyof OmitOptionals<Schema>]: ReifyType<OmitOptionals<Schema>[K]> }
+  : Schema extends Type<infer T> ? T extends (infer I)[] ? I[] : T
+  : Schema extends (t: infer T) => Uint8Array ? T
+  : Schema extends (u: Uint8Array) => infer T ? T
+  : never;
 
 class InvalidTypeError extends Error {
   constructor(name: string, expectedType: string, value: any) {
-    super(`Expected ${name} to be ${expectedType} but found type ${typeof value} instead, with value ${
+    super(
+      `Expected ${name} to be ${expectedType} but found type ${typeof value} instead, with value ${
         JSON.stringify(value)
-    }`);
+      }`,
+    );
   }
 }
 
 abstract class TypeImpl<T> implements Type<T> {
-  constructor(
-    readonly name: string,
-  ) { }
+  constructor(readonly name: string) {}
 
   readonly serialize = (t: T) => {
     const validated = this.validate(t);
@@ -75,7 +79,8 @@ abstract class TypeImpl<T> implements Type<T> {
   abstract validate(u: unknown): T;
 }
 
-export const bool = <T extends boolean>(name: string, literalValue?: T): Type<T> => new BoolType<T>(name, literalValue);
+export const bool = <T extends boolean>(name: string, literalValue?: T): Type<T> =>
+  new BoolType<T>(name, literalValue);
 class BoolType<T extends boolean> extends TypeImpl<T> {
   constructor(name: string, private readonly literalValue?: T) {
     super(name);
@@ -92,7 +97,8 @@ class BoolType<T extends boolean> extends TypeImpl<T> {
   };
 }
 
-export const str = <T extends string>(name: string, ...literalValues: T[]): Type<T> => new StringType(name, literalValues);
+export const str = <T extends string>(name: string, ...literalValues: T[]): Type<T> =>
+  new StringType(name, literalValues);
 class StringType<T extends string> extends TypeImpl<T> {
   constructor(name: string, private readonly literalValues: T[]) {
     super(name);
@@ -104,14 +110,20 @@ class StringType<T extends string> extends TypeImpl<T> {
     }
     if (this.literalValues.length > 0) {
       if (!this.literalValues.includes(s as any)) {
-        throw new Error(`Expected ${this.name} to be one of values [${this.literalValues.map(s => `"${s}"`).join(", ")}] but found "${s}" instead`);
+        throw new Error(`Expected ${this.name} to be one of values [${
+          this
+            .literalValues
+            .map(s => `"${s}"`)
+            .join(', ')
+        }] but found "${s}" instead`);
       }
     }
     return s as T;
   };
 }
 
-export const num = <T extends number>(name: string, ...literalValues: T[]): Type<T> => new NumberType(name, literalValues);
+export const num = <T extends number>(name: string, ...literalValues: T[]): Type<T> =>
+  new NumberType(name, literalValues);
 class NumberType<T extends number> extends TypeImpl<T> {
   constructor(name: string, private readonly literalValues: T[]) {
     super(name);
@@ -123,7 +135,11 @@ class NumberType<T extends number> extends TypeImpl<T> {
     }
     if (this.literalValues.length > 0) {
       if (!this.literalValues.includes(n as any)) {
-        throw new Error(`Expected ${this.name} to be one of values [${this.literalValues.join(", ")}] but found ${n} instead`);
+        throw new Error(`Expected ${this.name} to be one of values [${
+          this
+            .literalValues
+            .join(', ')
+        }] but found ${n} instead`);
       }
     }
     return n as T;
@@ -142,7 +158,9 @@ class Uint8ArrayType extends TypeImpl<Uint8Array> {
 
 // Nullable types will have the same `Type` as an optional type (i.e. `T | undefined | null`), so we add an additional
 // meta-property `optional` to discriminate against it during `Reify`.
-export const optional = <S extends Type<any>>(base: S): Type<Reify<S> | undefined> & { optional: true } => new OptionalType<S>(base);
+export const optional = <S extends Type<any>>(
+  base: S,
+): Type<Reify<S> | undefined> & { optional: true } => new OptionalType<S>(base);
 class OptionalType<T extends Type<any>> extends TypeImpl<Reify<T> | undefined> {
   readonly optional = true;
 
@@ -169,7 +187,8 @@ type _Recordish<S> = TypeImpl<S> & {
 };
 type RecordSchema = Record<string, Type<unknown>>;
 
-export const rec = <S extends RecordSchema>(name: string, schema: S): Type<Reify<S>> => new RecordType<S>(name, schema);
+export const rec = <S extends RecordSchema>(name: string, schema: S): Type<Reify<S>> =>
+  new RecordType<S>(name, schema);
 class RecordType<S extends RecordSchema> extends TypeImpl<Reify<S>> {
   constructor(name: string, readonly schema: S) {
     super(name);
@@ -202,12 +221,15 @@ class RecordType<S extends RecordSchema> extends TypeImpl<Reify<S>> {
   };
 }
 
-export const extend = <
-  S extends RecordSchema, B extends Type<Reify<RecordSchema>>
->(name: string, base: B, schema: S): Type<Omit<Reify<B>, keyof Reify<S>> & Reify<S>> => new ExtendsType<S, B>(name, base as unknown as Recordish, schema);
-class ExtendsType<
-  S extends RecordSchema, B extends Type<Reify<RecordSchema>>
-> extends TypeImpl<Omit<Reify<B>, keyof Reify<S>> & Reify<S>> {
+export const extend = <S extends RecordSchema, B extends Type<Reify<RecordSchema>>>(
+  name: string,
+  base: B,
+  schema: S,
+): Type<Omit<Reify<B>, keyof Reify<S>> & Reify<S>> =>
+  new ExtendsType<S, B>(name, base as unknown as Recordish, schema);
+class ExtendsType<S extends RecordSchema, B extends Type<Reify<RecordSchema>>>
+  extends TypeImpl<Omit<Reify<B>, keyof Reify<S>> & Reify<S>>
+{
   private subtype: RecordType<S>;
 
   constructor(name: string, private readonly baseType: Recordish, readonly schema: S) {
@@ -223,10 +245,7 @@ class ExtendsType<
     const ignoredKeys = Object.keys(this.schema);
     const baseResult = this.baseType.validate(u, ignoredKeys);
     const schemaResult = this.subtype.validate(u);
-    return {
-      ...baseResult as Reify<B>,
-      ...schemaResult,
-    };
+    return { ...baseResult as Reify<B>, ...schemaResult };
   };
 
   readonly validateProperty = <SK extends keyof S>(key: SK, value: S[SK]) => {
@@ -234,22 +253,26 @@ class ExtendsType<
   };
 }
 
-export const union = <
-  D extends string,
-  B extends Type<Record<string & D, any>>,
-  S extends B[],
->(name: string, discriminator: D, schemas: S): Type<Reify<S[0]>> => new UnionRecordType(name, discriminator, schemas as any);
+export const union = <D extends string, B extends Type<Record<string & D, any>>, S extends B[]>(
+  name: string,
+  discriminator: D,
+  schemas: S,
+): Type<Reify<S[0]>> => new UnionRecordType(name, discriminator, schemas as any);
 
-class UnionRecordType<
-  D extends string,
-  B extends Type<Record<string & D, any>>,
-  S extends B[],
-> extends TypeImpl<Reify<S[0]>> {
-  constructor(name: string, private readonly discriminator: D, private readonly schemas: Recordish[]) {
+class UnionRecordType<D extends string, B extends Type<Record<string & D, any>>, S extends B[]>
+  extends TypeImpl<Reify<S[0]>>
+{
+  constructor(
+    name: string,
+    private readonly discriminator: D,
+    private readonly schemas: Recordish[],
+  ) {
     super(name);
     for (const subschema of schemas) {
       if (!subschema.hasKey(discriminator)) {
-        throw new Error(`Subschema "${subschema.name}" of union type "${name}" is missing discriminator property "${discriminator}"`);
+        throw new Error(
+          `Subschema "${subschema.name}" of union type "${name}" is missing discriminator property "${discriminator}"`,
+        );
       }
     }
   }
@@ -286,7 +309,8 @@ class UnionRecordType<
   };
 }
 
-export const list = <S extends Type<unknown>>(name: string, itemSchema: S): Type<Reify<S>[]> => new ListType(name, itemSchema);
+export const list = <S extends Type<unknown>>(name: string, itemSchema: S): Type<Reify<S>[]> =>
+  new ListType(name, itemSchema);
 class ListType<I extends Type<unknown>> extends TypeImpl<Reify<I>[]> {
   constructor(name: string, private readonly itemSchema: I) {
     super(name);
