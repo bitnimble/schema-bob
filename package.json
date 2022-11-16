@@ -6,7 +6,7 @@
   "files": [
     "dist"
   ],
-  "repository": "git@github.com:anonymousthing/schema-bob.git",
+  "repository": "git@github.com:bitnimble/schema-bob.git",
   "author": "D <me@kumo.dev>",
   "license": "MIT",
   "scripts": {

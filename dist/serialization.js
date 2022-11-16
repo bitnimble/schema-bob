@@ -50,7 +50,10 @@ class StringType extends TypeImpl {
             }
             if (this.literalValues.length > 0) {
                 if (!this.literalValues.includes(s)) {
-                    throw new Error(`Expected ${this.name} to be one of values [${this.literalValues.map(s => `"${s}"`).join(", ")}] but found "${s}" instead`);
+                    throw new Error(`Expected ${this.name} to be one of values [${this
+                        .literalValues
+                        .map(s => `"${s}"`)
+                        .join(', ')}] but found "${s}" instead`);
                 }
             }
             return s;
@@ -69,7 +72,9 @@ class NumberType extends TypeImpl {
             }
             if (this.literalValues.length > 0) {
                 if (!this.literalValues.includes(n)) {
-                    throw new Error(`Expected ${this.name} to be one of values [${this.literalValues.join(", ")}] but found ${n} instead`);
+                    throw new Error(`Expected ${this.name} to be one of values [${this
+                        .literalValues
+                        .join(', ')}] but found ${n} instead`);
                 }
             }
             return n;
@@ -89,6 +94,8 @@ class Uint8ArrayType extends TypeImpl {
         };
     }
 }
+// Nullable types will have the same `Type` as an optional type (i.e. `T | undefined | null`), so we add an additional
+// meta-property `optional` to discriminate against it during `Reify`.
 const optional = (base) => new OptionalType(base);
 exports.optional = optional;
 class OptionalType extends TypeImpl {
@@ -96,6 +103,7 @@ class OptionalType extends TypeImpl {
         // TODO: wire parent name down into optionals
         super('');
         this.base = base;
+        this.optional = true;
         this.validate = (u) => {
             if (u != null) {
                 return this.base.validate(u);
